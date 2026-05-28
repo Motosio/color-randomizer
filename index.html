@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>カラー変更</title>
+
+  <style>
+    body{
+      background:#222;
+      color:white;
+      text-align:center;
+      font-family:sans-serif;
+    }
+
+    .wrap{
+      position:relative;
+      width:400px;
+      margin:auto;
+    }
+
+    .layer{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+    }
+
+    .base{
+      position:relative;
+    }
+
+    button{
+      margin-top:420px;
+      padding:10px 20px;
+      font-size:20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>色ランダム</h1>
+
+<div class="wrap">
+
+  <img src="base.png" class="base layer">
+
+  <img src="hair.png"
+       class="layer"
+       id="hair">
+
+  <img src="clothes.png"
+       class="layer"
+       id="clothes">
+
+</div>
+
+<button onclick="randomize()">
+  ランダム変更
+</button>
+
+<script>
+
+function rand(){
+  return Math.floor(Math.random()*360);
+}
+
+function randomize(){
+
+  const hair =
+    document.getElementById("hair");
+
+  const clothes =
+    document.getElementById("clothes");
+
+  hair.style.filter =
+    `hue-rotate(${rand()}deg)`;
+
+  clothes.style.filter =
+    `hue-rotate(${rand()}deg)`;
+}
+
+</script>
+
+</body>
+</html>
