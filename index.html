@@ -19,16 +19,11 @@ body{
   margin:auto;
 }
 
-/* canvasを重ねる方式に変更 */
 canvas{
   position:absolute;
   top:0;
   left:0;
   width:100%;
-}
-
-.base{
-  position:relative;
 }
 
 button{
@@ -65,7 +60,7 @@ button{
 
 <script>
 
-// 各レイヤー画像パス
+// レイヤー画像
 const layers = {
   inner: "inner.png",
   under: "under.png",
@@ -103,20 +98,12 @@ for (let key in layers){
   };
 }
 
-function randomColor(){
-
-  return {
-    h: Math.random()*360,
-    s: 40 + Math.random()*60,
-    l: 35 + Math.random()*30
-  };
-}
-
 /* ---------------------------
-   RGB置換の核
+   完全RGB塗りつぶし
 ----------------------------*/
-function applyColor(ctx, canvas, img, h, s, l){
+function applyColor(ctx, canvas, img, r, g, b){
 
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(img, 0, 0);
 
   const imageData = ctx.getImageData(
@@ -132,16 +119,10 @@ function applyColor(ctx, canvas, img, h, s, l){
     // 透明は無視
     if (d[i + 3] === 0) continue;
 
-    // グレースケール化（重要）
-    const gray =
-      d[i]*0.3 +
-      d[i+1]*0.59 +
-      d[i+2]*0.11;
-
-    // RGB再構築（擬似色付け）
-    d[i]   = gray * (h/360);
-    d[i+1] = gray * (s/100);
-    d[i+2] = gray * (l/100);
+    // ★ここが本体：完全上書き
+    d[i]   = r;
+    d[i+1] = g;
+    d[i+2] = b;
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -155,40 +136,51 @@ function draw(key, color){
   const img = images[key];
 
   if (!color){
-
     ctx.drawImage(img, 0, 0);
     return;
   }
 
-  applyColor(ctx, canvas, img, color.h, color.s, color.l);
+  applyColor(ctx, canvas, img, color.r, color.g, color.b);
 }
 
-/* ランダム生成 */
+/* ランダムRGB */
+function randomRGB(){
+  return {
+    r: Math.floor(Math.random()*256),
+    g: Math.floor(Math.random()*256),
+    b: Math.floor(Math.random()*256)
+  };
+}
+
+/* ランダム変更 */
 function randomize(){
 
-  const hair  = randomColor();
-  const eye   = randomColor();
-  const inner = randomColor();
-  const outer = randomColor();
-  const under = randomColor();
-  const glove = randomColor();
+  const hair  = randomRGB();
+  const eye   = randomRGB();
+  const inner = randomRGB();
+  const outer = randomRGB();
+  const under = randomRGB();
+  const glove = randomRGB();
 
   draw("hair", hair);
   draw("eye", eye);
   draw("inner", inner);
   draw("outer", outer);
+
+  // outer2はouter派生（少し明るく）
   draw("outer2", {
-    h: outer.h,
-    s: outer.s * 0.7,
-    l: outer.l + 15
+    r: Math.min(255, outer.r + 40),
+    g: Math.min(255, outer.g + 40),
+    b: Math.min(255, outer.b + 40)
   });
+
   draw("under", under);
   draw("glove", glove);
 
-  // 固定レイヤー
-  draw("skin");
-  draw("eyelid");
-  draw("line");
+  // 固定
+  draw("skin", {r:255,g:220,b:200});
+  draw("eyelid", {r:255,g:255,b:255});
+  draw("line", {r:0,g:0,b:0});
 }
 
 </script>
