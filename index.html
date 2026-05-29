@@ -80,11 +80,16 @@ function setColor(id, h, s, l){
   const el = document.getElementById(id);
 
   el.style.filter =
-    `hue-rotate(${h}deg)
-     saturate(${s}%)
-     brightness(${l + 50}%)`;
+  `
+  brightness(0)
+  invert(1)
+  sepia(1)
+  hue-rotate(${h}deg)
+  saturate(${120 + s}%)
+  brightness(${100 + l}%)
+  `;
 }
-
+  
 function randomize(){
 
   const hair = randomColor();
