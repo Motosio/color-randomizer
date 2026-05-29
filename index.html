@@ -19,7 +19,8 @@ body{
   margin:auto;
 }
 
-.layer{
+/* canvasを重ねる方式に変更 */
+canvas{
   position:absolute;
   top:0;
   left:0;
@@ -31,7 +32,7 @@ body{
 }
 
 button{
-  margin-top:20px;
+  margin-top:520px;
   padding:12px 24px;
   font-size:20px;
 }
@@ -45,16 +46,16 @@ button{
 
 <div class="wrap">
 
-<img src="inner.png" class="layer" id="inner">
-<img src="under.png" class="layer" id="under">
-<img src="skin.png" class="base layer">
-<img src="glove.png" class="layer" id="glove">
-<img src="outer.png" class="layer" id="outer">
-<img src="outer2.png" class="layer" id="outer2">
-<img src="eyelid.png" class="layer" id="eyelid">
-<img src="eye.png" class="layer" id="eye">
-<img src="hair.png" class="layer" id="hair">
-<img src="line.png" class="layer">
+<canvas id="inner"></canvas>
+<canvas id="under"></canvas>
+<canvas id="skin"></canvas>
+<canvas id="glove"></canvas>
+<canvas id="outer"></canvas>
+<canvas id="outer2"></canvas>
+<canvas id="eyelid"></canvas>
+<canvas id="eye"></canvas>
+<canvas id="hair"></canvas>
+<canvas id="line"></canvas>
 
 </div>
 
@@ -64,92 +65,130 @@ button{
 
 <script>
 
-function randomColor(){
+// 各レイヤー画像パス
+const layers = {
+  inner: "inner.png",
+  under: "under.png",
+  skin: "skin.png",
+  glove: "glove.png",
+  outer: "outer.png",
+  outer2: "outer2.png",
+  eyelid: "eyelid.png",
+  eye: "eye.png",
+  hair: "hair.png",
+  line: "line.png"
+};
 
-  const h = Math.random()*360;
-  const s = 40 + Math.random()*60;
-  const l = 35 + Math.random()*30;
+const images = {};
+const canvases = {};
+const ctxs = {};
 
-  return {
-    h,s,l
+// 初期化
+for (let key in layers){
+
+  const img = new Image();
+  img.src = layers[key];
+  images[key] = img;
+
+  const canvas = document.getElementById(key);
+  const ctx = canvas.getContext("2d");
+
+  canvases[key] = canvas;
+  ctxs[key] = ctx;
+
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    draw(key);
   };
 }
 
-function setColor(id, h, s, l){
+function randomColor(){
 
-  const el = document.getElementById(id);
-
-  el.style.filter =
-  `
-  brightness(0)
-  invert(1)
-  sepia(1)
-  hue-rotate(${h}deg)
-  saturate(${120 + s}%)
-  brightness(${100 + l}%)
-  `;
+  return {
+    h: Math.random()*360,
+    s: 40 + Math.random()*60,
+    l: 35 + Math.random()*30
+  };
 }
-  
+
+/* ---------------------------
+   RGB置換の核
+----------------------------*/
+function applyColor(ctx, canvas, img, h, s, l){
+
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(
+    0, 0,
+    canvas.width,
+    canvas.height
+  );
+
+  const d = imageData.data;
+
+  for (let i = 0; i < d.length; i += 4){
+
+    // 透明は無視
+    if (d[i + 3] === 0) continue;
+
+    // グレースケール化（重要）
+    const gray =
+      d[i]*0.3 +
+      d[i+1]*0.59 +
+      d[i+2]*0.11;
+
+    // RGB再構築（擬似色付け）
+    d[i]   = gray * (h/360);
+    d[i+1] = gray * (s/100);
+    d[i+2] = gray * (l/100);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+/* 描画 */
+function draw(key, color){
+
+  const ctx = ctxs[key];
+  const canvas = canvases[key];
+  const img = images[key];
+
+  if (!color){
+
+    ctx.drawImage(img, 0, 0);
+    return;
+  }
+
+  applyColor(ctx, canvas, img, color.h, color.s, color.l);
+}
+
+/* ランダム生成 */
 function randomize(){
 
-  const hair = randomColor();
-  const eye = randomColor();
+  const hair  = randomColor();
+  const eye   = randomColor();
   const inner = randomColor();
   const outer = randomColor();
   const under = randomColor();
   const glove = randomColor();
 
-  setColor(
-    "hair",
-    hair.h,
-    hair.s,
-    hair.l
-  );
+  draw("hair", hair);
+  draw("eye", eye);
+  draw("inner", inner);
+  draw("outer", outer);
+  draw("outer2", {
+    h: outer.h,
+    s: outer.s * 0.7,
+    l: outer.l + 15
+  });
+  draw("under", under);
+  draw("glove", glove);
 
-  setColor(
-    "eye",
-    eye.h,
-    eye.s,
-    eye.l
-  );
-
-  setColor(
-    "inner",
-    inner.h,
-    inner.s,
-    inner.l
-  );
-
-  setColor(
-    "outer",
-    outer.h,
-    outer.s,
-    outer.l
-  );
-
-  // outer2
-  // 彩度低め・少し明るめ
-
-  setColor(
-    "outer2",
-    outer.h,
-    outer.s * 0.7,
-    outer.l + 10
-  );
-
-  setColor(
-    "under",
-    under.h,
-    under.s,
-    under.l
-  );
-
-  setColor(
-    "glove",
-    glove.h,
-    glove.s,
-    glove.l
-  );
+  // 固定レイヤー
+  draw("skin");
+  draw("eyelid");
+  draw("line");
 }
 
 </script>
