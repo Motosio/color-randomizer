@@ -5,6 +5,7 @@
 <title>Color Randomizer</title>
 
 <style>
+
 body{
   background:#222;
   color:white;
@@ -30,6 +31,7 @@ button{
   padding:12px 24px;
   font-size:20px;
 }
+
 </style>
 </head>
 
@@ -52,7 +54,9 @@ button{
 
 </div>
 
-<button onclick="randomize()">ランダム変更</button>
+<button onclick="randomize()">
+ランダム変更
+</button>
 
 <script>
 
@@ -74,7 +78,7 @@ const canvases = {};
 const ctxs = {};
 
 // 初期化
-for (let key in layers){
+for(let key in layers){
 
   const img = new Image();
   img.src = layers[key];
@@ -87,45 +91,51 @@ for (let key in layers){
   ctxs[key] = ctx;
 
   img.onload = () => {
+
     canvas.width = img.width;
     canvas.height = img.height;
+
     draw(key);
   };
 }
 
-/* ---------------------------
-   レイヤー別カラー生成
-----------------------------*/
+/* -------------------------
+   カラー生成
+------------------------- */
 
-// 限りなく黒
+// 黒寄り
 function colorNearBlack(){
+
   return {
     h: Math.random()*360,
-    s: 5 + Math.random()*20,
-    l: 0 + Math.random()*15
+    s: 10 + Math.random()*20,
+    l: 5 + Math.random()*12
   };
 }
 
-// 限りなく白
+// 白寄り
 function colorNearWhite(){
+
   return {
     h: Math.random()*360,
-    s: 0 + Math.random()*10,
-    l: 85 + Math.random()*15
+    s: 5 + Math.random()*10,
+    l: 88 + Math.random()*10
   };
 }
 
-// ビビッド（少しだけ黒寄り）
+// ビビッド
 function colorVivid(){
+
   return {
     h: Math.random()*360,
     s: 80 + Math.random()*20,
-    l: 40 + Math.random()*20
+    l: 45 + Math.random()*15
   };
 }
 
-// 通常ランダム
+// 普通
 function randomColor(){
+
   return {
     h: Math.random()*360,
     s: 40 + Math.random()*60,
@@ -133,32 +143,89 @@ function randomColor(){
   };
 }
 
-/* ---------------------------
-   色適用処理
-----------------------------*/
+/* -------------------------
+   HSL → RGB
+------------------------- */
+
+function hslToRgb(h, s, l){
+
+  s /= 100;
+  l /= 100;
+
+  const c = (1 - Math.abs(2*l - 1)) * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = l - c/2;
+
+  let r=0,g=0,b=0;
+
+  if(h < 60){
+    r=c; g=x; b=0;
+  }
+  else if(h < 120){
+    r=x; g=c; b=0;
+  }
+  else if(h < 180){
+    r=0; g=c; b=x;
+  }
+  else if(h < 240){
+    r=0; g=x; b=c;
+  }
+  else if(h < 300){
+    r=x; g=0; b=c;
+  }
+  else{
+    r=c; g=0; b=x;
+  }
+
+  return {
+    r: Math.round((r+m)*255),
+    g: Math.round((g+m)*255),
+    b: Math.round((b+m)*255)
+  };
+}
+
+/* -------------------------
+   色適用
+------------------------- */
+
 function applyColor(ctx, canvas, img, h, s, l){
 
+  // 前回描画を消す
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 元画像描画
   ctx.drawImage(img, 0, 0);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
   const d = imageData.data;
 
-  for (let i = 0; i < d.length; i += 4){
+  const rgb = hslToRgb(h, s, l);
 
-    if (d[i + 3] === 0) continue;
+  for(let i = 0; i < d.length; i += 4){
 
+    if(d[i+3] === 0) continue;
+
+    // 元画像の明るさ
     const gray =
-      d[i]*0.3 +
-      d[i+1]*0.59 +
-      d[i+2]*0.11;
+      (d[i] + d[i+1] + d[i+2]) / 3 / 255;
 
-    d[i]   = gray * (h/360);
-    d[i+1] = gray * (s/100);
-    d[i+2] = gray * (l/100);
+    d[i]   = rgb.r * gray;
+    d[i+1] = rgb.g * gray;
+    d[i+2] = rgb.b * gray;
   }
 
   ctx.putImageData(imageData, 0, 0);
 }
+
+/* -------------------------
+   描画
+------------------------- */
 
 function draw(key, color){
 
@@ -166,26 +233,40 @@ function draw(key, color){
   const canvas = canvases[key];
   const img = images[key];
 
-  if (!color){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if(!color){
+
     ctx.drawImage(img, 0, 0);
     return;
   }
 
-  applyColor(ctx, canvas, img, color.h, color.s, color.l);
+  applyColor(
+    ctx,
+    canvas,
+    img,
+    color.h,
+    color.s,
+    color.l
+  );
 }
 
-/* ---------------------------
-   ランダム適用（レイヤー別制御）
-----------------------------*/
+/* -------------------------
+   ランダム化
+------------------------- */
+
 function randomize(){
 
   draw("hair", randomColor());
+
   draw("eye", randomColor());
 
   draw("inner", colorNearWhite());
 
   draw("outer", colorNearBlack());
+
   draw("under", colorNearBlack());
+
   draw("glove", colorNearBlack());
 
   draw("outer2", colorVivid());
