@@ -5,7 +5,6 @@
 <title>Color Randomizer</title>
 
 <style>
-
 body{
   background:#222;
   color:white;
@@ -31,7 +30,6 @@ button{
   padding:12px 24px;
   font-size:20px;
 }
-
 </style>
 </head>
 
@@ -54,13 +52,10 @@ button{
 
 </div>
 
-<button onclick="randomize()">
-ランダム変更
-</button>
+<button onclick="randomize()">ランダム変更</button>
 
 <script>
 
-// レイヤー画像
 const layers = {
   inner: "inner.png",
   under: "under.png",
@@ -99,36 +94,72 @@ for (let key in layers){
 }
 
 /* ---------------------------
-   完全RGB塗りつぶし
+   レイヤー別カラー生成
 ----------------------------*/
-function applyColor(ctx, canvas, img, r, g, b){
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// 限りなく黒
+function colorNearBlack(){
+  return {
+    h: Math.random()*360,
+    s: 5 + Math.random()*20,
+    l: 0 + Math.random()*15
+  };
+}
+
+// 限りなく白
+function colorNearWhite(){
+  return {
+    h: Math.random()*360,
+    s: 0 + Math.random()*10,
+    l: 85 + Math.random()*15
+  };
+}
+
+// ビビッド（少しだけ黒寄り）
+function colorVivid(){
+  return {
+    h: Math.random()*360,
+    s: 80 + Math.random()*20,
+    l: 40 + Math.random()*20
+  };
+}
+
+// 通常ランダム
+function randomColor(){
+  return {
+    h: Math.random()*360,
+    s: 40 + Math.random()*60,
+    l: 35 + Math.random()*30
+  };
+}
+
+/* ---------------------------
+   色適用処理
+----------------------------*/
+function applyColor(ctx, canvas, img, h, s, l){
+
   ctx.drawImage(img, 0, 0);
 
-  const imageData = ctx.getImageData(
-    0, 0,
-    canvas.width,
-    canvas.height
-  );
-
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const d = imageData.data;
 
   for (let i = 0; i < d.length; i += 4){
 
-    // 透明は無視
     if (d[i + 3] === 0) continue;
 
-    // ★ここが本体：完全上書き
-    d[i]   = r;
-    d[i+1] = g;
-    d[i+2] = b;
+    const gray =
+      d[i]*0.3 +
+      d[i+1]*0.59 +
+      d[i+2]*0.11;
+
+    d[i]   = gray * (h/360);
+    d[i+1] = gray * (s/100);
+    d[i+2] = gray * (l/100);
   }
 
   ctx.putImageData(imageData, 0, 0);
 }
 
-/* 描画 */
 function draw(key, color){
 
   const ctx = ctxs[key];
@@ -140,47 +171,28 @@ function draw(key, color){
     return;
   }
 
-  applyColor(ctx, canvas, img, color.r, color.g, color.b);
+  applyColor(ctx, canvas, img, color.h, color.s, color.l);
 }
 
-/* ランダムRGB */
-function randomRGB(){
-  return {
-    r: Math.floor(Math.random()*256),
-    g: Math.floor(Math.random()*256),
-    b: Math.floor(Math.random()*256)
-  };
-}
-
-/* ランダム変更 */
+/* ---------------------------
+   ランダム適用（レイヤー別制御）
+----------------------------*/
 function randomize(){
 
-  const hair  = randomRGB();
-  const eye   = randomRGB();
-  const inner = randomRGB();
-  const outer = randomRGB();
-  const under = randomRGB();
-  const glove = randomRGB();
+  draw("hair", randomColor());
+  draw("eye", randomColor());
 
-  draw("hair", hair);
-  draw("eye", eye);
-  draw("inner", inner);
-  draw("outer", outer);
+  draw("inner", colorNearWhite());
 
-  // outer2はouter派生（少し明るく）
-  draw("outer2", {
-    r: Math.min(255, outer.r + 40),
-    g: Math.min(255, outer.g + 40),
-    b: Math.min(255, outer.b + 40)
-  });
+  draw("outer", colorNearBlack());
+  draw("under", colorNearBlack());
+  draw("glove", colorNearBlack());
 
-  draw("under", under);
-  draw("glove", glove);
+  draw("outer2", colorVivid());
 
-  // 固定
-  draw("skin", {r:255,g:220,b:200});
-  draw("eyelid", {r:255,g:255,b:255});
-  draw("line", {r:0,g:0,b:0});
+  draw("skin");
+  draw("eyelid");
+  draw("line");
 }
 
 </script>
