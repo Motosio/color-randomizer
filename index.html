@@ -88,16 +88,24 @@ function setColor(id, h, s, l){
 function randomize(){
 
   const hair = randomColor();
+  const eye = randomColor();
   const inner = randomColor();
   const outer = randomColor();
   const under = randomColor();
   const glove = randomColor();
 
   setColor(
-    "haireye",
+    "hair",
     hair.h,
     hair.s,
     hair.l
+  );
+
+  setColor(
+    "eye",
+    eye.h,
+    eye.s,
+    eye.l
   );
 
   setColor(
