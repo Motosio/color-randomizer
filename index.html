@@ -1,83 +1,142 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>カラー変更</title>
+<meta charset="UTF-8">
+<title>Color Randomizer</title>
 
-  <style>
-    body{
-      background:#222;
-      color:white;
-      text-align:center;
-      font-family:sans-serif;
-    }
+<style>
 
-    .wrap{
-      position:relative;
-      width:400px;
-      margin:auto;
-    }
+body{
+  background:#222;
+  color:white;
+  text-align:center;
+  font-family:sans-serif;
+}
 
-    .layer{
-      position:absolute;
-      top:0;
-      left:0;
-      width:100%;
-    }
+.wrap{
+  position:relative;
+  width:500px;
+  margin:auto;
+}
 
-    .base{
-      position:relative;
-    }
+.layer{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+}
 
-    button{
-      margin-top:420px;
-      padding:10px 20px;
-      font-size:20px;
-    }
-  </style>
+.base{
+  position:relative;
+}
+
+button{
+  margin-top:520px;
+  padding:12px 24px;
+  font-size:20px;
+}
+
+</style>
 </head>
 
 <body>
 
-<h1>色ランダム</h1>
+<h1>カラーシミュレーター</h1>
 
 <div class="wrap">
 
-  <img src="base.png" class="base layer">
+<img src="skin.png" class="base layer">
 
-  <img src="hair.png"
-       class="layer"
-       id="hair">
-
-  <img src="clothes.png"
-       class="layer"
-       id="clothes">
+<img src="inner.png" class="layer" id="inner">
+<img src="under.png" class="layer" id="under">
+<img src="outer.png" class="layer" id="outer">
+<img src="outer2.png" class="layer" id="outer2">
+<img src="glove.png" class="layer" id="glove">
+<img src="haireye.png" class="layer" id="haireye">
+<img src="eyelid.png" class="layer" id="eyelid">
+<img src="line.png" class="layer">
 
 </div>
 
 <button onclick="randomize()">
-  ランダム変更
+ランダム変更
 </button>
 
 <script>
 
-function rand(){
-  return Math.floor(Math.random()*360);
+function randomColor(){
+
+  const h = Math.random()*360;
+  const s = 40 + Math.random()*60;
+  const l = 35 + Math.random()*30;
+
+  return {
+    h,s,l
+  };
+}
+
+function setColor(id, h, s, l){
+
+  const el = document.getElementById(id);
+
+  el.style.filter =
+    `hue-rotate(${h}deg)
+     saturate(${s}%)
+     brightness(${l + 50}%)`;
 }
 
 function randomize(){
 
-  const hair =
-    document.getElementById("hair");
+  const hair = randomColor();
+  const inner = randomColor();
+  const outer = randomColor();
+  const under = randomColor();
+  const glove = randomColor();
 
-  const clothes =
-    document.getElementById("clothes");
+  setColor(
+    "haireye",
+    hair.h,
+    hair.s,
+    hair.l
+  );
 
-  hair.style.filter =
-    `hue-rotate(${rand()}deg)`;
+  setColor(
+    "inner",
+    inner.h,
+    inner.s,
+    inner.l
+  );
 
-  clothes.style.filter =
-    `hue-rotate(${rand()}deg)`;
+  setColor(
+    "outer",
+    outer.h,
+    outer.s,
+    outer.l
+  );
+
+  // outer2
+  // 彩度低め・少し明るめ
+
+  setColor(
+    "outer2",
+    outer.h,
+    outer.s * 0.7,
+    outer.l + 10
+  );
+
+  setColor(
+    "under",
+    under.h,
+    under.s,
+    under.l
+  );
+
+  setColor(
+    "glove",
+    glove.h,
+    glove.s,
+    glove.l
+  );
 }
 
 </script>
